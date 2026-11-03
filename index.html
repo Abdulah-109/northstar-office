@@ -1,612 +1,914 @@
-<!DOCTYPE html>
-<html lang="de" class="h-full bg-[#F5F1E8] text-[#34312D]">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Northstar – Mac Desktop Edition v4.0</title>
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase JS Client for Cloud Sync -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            mac: {
-              bg: '#F5F1E8',
-              sidebar: '#EAE2D5',
-              window: '#FFFDF8',
-              border: '#DED5C8',
-              accent: '#C8B69B',
-              accentHover: '#B5A182',
-              text: '#34312D',
-              muted: '#81796F',
-              dock: 'rgba(234, 226, 213, 0.85)'
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    body {
-      font-family: 'Inter', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-      background-color: #F5F1E8;
-      color: #34312D;
-      user-select: none;
-    }
-    input, textarea, select {
-      user-select: text;
-    }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #DED5C8; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #C8B69B; }
-    
-    .mac-window {
-      box-shadow: 0 20px 40px -15px rgba(52, 49, 45, 0.15), 0 0 0 1px rgba(222, 213, 200, 0.6);
-      backdrop-filter: blur(20px);
-    }
-    .dock-glass {
-      background: rgba(234, 226, 213, 0.82);
-      backdrop-filter: blur(25px);
-      box-shadow: 0 10px 30px rgba(52, 49, 45, 0.12), 0 0 0 1px rgba(222, 213, 200, 0.5);
-    }
-  </style>
-</head>
-<body class="h-screen w-screen flex flex-col overflow-hidden antialiased selection:bg-[#C8B69B] selection:text-white">
-
-  <!-- macOS TOP MENU BAR -->
-  <header class="h-8 bg-[#EAE2D5]/90 border-b border-[#DED5C8] flex items-center justify-between px-4 z-50 text-xs font-medium select-none shrink-0">
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-1.5 font-bold text-[#34312D] cursor-pointer" onclick="openApp('dashboard')">
-        <span class="w-3 h-3 rounded-full bg-[#C8B69B] inline-block"></span>
-        <span>Northstar</span>
-      </div>
-      <span class="text-[#81796F] hidden sm:inline" id="topbar-active-app">Dashboard</span>
-    </div>
-    
-    <div class="flex items-center gap-4 text-[#34312D]">
-      <div id="sync-status-indicator" class="flex items-center gap-1.5 text-[11px] text-[#81796F]" title="Cloud Sync Status">
-        <i data-lucide="cloud-off" class="w-3.5 h-3.5"></i>
-        <span class="hidden md:inline">Lokal</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <i data-lucide="wifi" class="w-3.5 h-3.5 text-[#81796F]"></i>
-        <i data-lucide="battery" class="w-4 h-4 text-[#81796F]"></i>
-        <span id="topbar-clock">00:00</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- DESKTOP WORKSPACE AREA -->
-  <div id="desktop-area" class="flex-1 relative overflow-hidden flex flex-col md:flex-row">
-
-    <!-- DESKTOP APP ICONS GRID (Background layer) -->
-    <div class="absolute inset-6 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-6 content-start z-0 pointer-events-none select-none">
-      <div onclick="openApp('finder')" class="flex flex-col items-center gap-1.5 cursor-pointer pointer-events-auto group">
-        <div class="w-14 h-14 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] shadow-sm flex items-center justify-center text-[#C8B69B] group-hover:scale-105 transition">
-          <i data-lucide="folder" class="w-7 h-7"></i>
+    <!-- 3. TASKS & PLANNING SECTION -->
+    <section id="section-tasks" class="content-section space-y-6 hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-[#34312D]">Aufgaben & Planung</h2>
+          <p class="text-xs text-[#81796F] mt-1">Verwalte deine To-dos und Deadlines im klaren Überblick.</p>
         </div>
-        <span class="text-[11px] font-medium text-[#34312D] bg-[#F5F1E8]/80 px-2 py-0.5 rounded shadow-2xs">Finder</span>
+
+        <!-- Filters -->
+        <div class="flex items-center gap-1.5 bg-[#EAE2D5] p-1.5 rounded-xl border border-[#DED5C8] overflow-x-auto">
+          <button onclick="filterTasks('all')" class="task-filter-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#C8B69B] text-white" data-cat="all">Alle</button>
+          <button onclick="filterTasks('Schule')" class="task-filter-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#81796F] hover:text-[#34312D]" data-cat="Schule">Schule</button>
+          <button onclick="filterTasks('Lernen')" class="task-filter-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#81796F] hover:text-[#34312D]" data-cat="Lernen">Lernen</button>
+          <button onclick="filterTasks('Privat')" class="task-filter-pill px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#81796F] hover:text-[#34312D]" data-cat="Privat">Privat</button>
+        </div>
       </div>
 
-      <div onclick="openApp('lernen')" class="flex flex-col items-center gap-1.5 cursor-pointer pointer-events-auto group">
-        <div class="w-14 h-14 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] shadow-sm flex items-center justify-center text-[#C8B69B] group-hover:scale-105 transition">
-          <i data-lucide="graduation-cap" class="w-7 h-7"></i>
+      <!-- Add New Task Form -->
+      <form onsubmit="handleAddTaskSubmit(event)" class="p-4 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] grid grid-cols-1 md:grid-cols-12 gap-3 items-center shadow-xs">
+        <div class="md:col-span-5">
+          <input type="text" id="task-in-title" placeholder="Neue Aufgabe eingeben..." required class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3.5 py-2.5 text-xs text-[#34312D] placeholder-[#81796F] focus:outline-none focus:border-[#C8B69B]">
         </div>
-        <span class="text-[11px] font-medium text-[#34312D] bg-[#F5F1E8]/80 px-2 py-0.5 rounded shadow-2xs">Lernen</span>
+        <div class="md:col-span-3">
+          <select id="task-in-cat" class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3 py-2.5 text-xs text-[#34312D] focus:outline-none focus:border-[#C8B69B]">
+            <option value="Schule">Schule</option>
+            <option value="Lernen" selected>Lernen</option>
+            <option value="Privat">Privat</option>
+          </select>
+        </div>
+        <div class="md:col-span-3">
+          <input type="date" id="task-in-date" class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3 py-2 text-xs text-[#34312D] focus:outline-none focus:border-[#C8B69B]">
+        </div>
+        <div class="md:col-span-1">
+          <button type="submit" class="w-full py-2.5 bg-[#C8B69B] hover:bg-[#B5A182] text-white rounded-xl text-xs font-bold transition flex items-center justify-center shadow-xs">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </form>
+
+      <!-- Task Lists -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Offene Aufgaben -->
+        <div class="p-5 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] space-y-3 shadow-xs">
+          <h3 class="text-sm font-bold text-[#34312D] flex items-center justify-between">
+            <span>Offene Aufgaben (nach Datum sortiert)</span>
+            <span id="badge-open-tasks-count" class="text-xs text-[#34312D] bg-[#EAE2D5] px-2 py-0.5 rounded font-bold">0</span>
+          </h3>
+          <div id="open-tasks-list" class="space-y-2">
+            <!-- Dynamic Tasks -->
+          </div>
+        </div>
+
+        <!-- Erledigte Aufgaben -->
+        <div class="p-5 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] space-y-3 shadow-xs">
+          <h3 class="text-sm font-bold text-[#34312D] flex items-center justify-between">
+            <span>Erledigte Aufgaben</span>
+            <span id="badge-comp-tasks-count" class="text-xs text-[#81796F] bg-[#EAE2D5] px-2 py-0.5 rounded font-bold">0</span>
+          </h3>
+          <div id="comp-tasks-list" class="space-y-2 opacity-80">
+            <!-- Dynamic Tasks -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. CENTER (GOOGLE RESEARCH) SECTION -->
+    <section id="section-center" class="content-section space-y-6 hidden">
+      <div class="text-center max-w-2xl mx-auto space-y-4 pt-6 md:pt-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAE2D5] border border-[#DED5C8] text-[#34312D] text-xs font-semibold">
+          <i data-lucide="globe" class="w-3.5 h-3.5 text-[#C8B69B]"></i> Google Search Engine
+        </div>
+        <h2 class="text-3xl md:text-4xl font-black tracking-tight text-[#34312D]">Recherche-Zentrale</h2>
+        <p class="text-xs md:text-sm text-[#81796F]">Nutze das Suchfeld für direkte Google-Abfragen oder steuere Schnellzugriffe an.</p>
+
+        <!-- Form for Google Search -->
+        <form onsubmit="handleGoogleSearchSubmit(event)" class="relative max-w-xl mx-auto mt-6">
+          <input type="text" id="google-search-bar" placeholder="Google Suche eingeben & Enter drücken..." required class="w-full bg-[#FFFDF8] border-2 border-[#DED5C8] rounded-2xl py-4 pl-12 pr-28 text-sm text-[#34312D] placeholder-[#81796F] focus:outline-none focus:border-[#C8B69B] shadow-sm transition">
+          <i data-lucide="search" class="w-5 h-5 text-[#81796F] absolute left-4 top-4.5"></i>
+          <button type="submit" class="absolute right-2 top-2 bottom-2 px-4 bg-[#C8B69B] hover:bg-[#B5A182] text-white font-semibold text-xs rounded-xl transition flex items-center justify-center shadow-xs">
+            Suchen
+          </button>
+        </form>
+
+        <!-- Quick Access Shortcut Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-6">
+          <a href="https://www.google.com" target="_blank" class="px-4 py-2.5 rounded-xl bg-[#FFFDF8] border border-[#DED5C8] text-xs font-semibold text-[#34312D] hover:bg-[#EAE2D5] flex items-center gap-2 shadow-xs transition">
+            <i data-lucide="search" class="w-4 h-4 text-[#C8B69B]"></i> Google.com
+          </a>
+          <a href="https://www.youtube.com" target="_blank" class="px-4 py-2.5 rounded-xl bg-[#FFFDF8] border border-[#DED5C8] text-xs font-semibold text-[#34312D] hover:bg-[#EAE2D5] flex items-center gap-2 shadow-xs transition">
+            <i data-lucide="video" class="w-4 h-4 text-[#C8B69B]"></i> YouTube
+          </a>
+          <a href="https://de.wikipedia.org" target="_blank" class="px-4 py-2.5 rounded-xl bg-[#FFFDF8] border border-[#DED5C8] text-xs font-semibold text-[#34312D] hover:bg-[#EAE2D5] flex items-center gap-2 shadow-xs transition">
+            <i data-lucide="book-open" class="w-4 h-4 text-[#C8B69B]"></i> Wikipedia
+          </a>
+          <a href="https://chatgpt.com" target="_blank" class="px-4 py-2.5 rounded-xl bg-[#FFFDF8] border border-[#DED5C8] text-xs font-semibold text-[#34312D] hover:bg-[#EAE2D5] flex items-center gap-2 shadow-xs transition">
+            <i data-lucide="sparkles" class="w-4 h-4 text-[#C8B69B]"></i> ChatGPT
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. EINSTELLUNGEN & DATENSICHERUNG SECTION -->
+    <section id="section-einstellungen" class="content-section space-y-6 hidden">
+      <div>
+        <h2 class="text-2xl font-bold text-[#34312D]">Einstellungen & Datensicherung</h2>
+        <p class="text-xs text-[#81796F] mt-1">Exportiere deine Daten als Backup, importiere sie neu oder verwalte das System.</p>
       </div>
 
-      <div onclick="openApp('donna')" class="flex flex-col items-center gap-1.5 cursor-pointer pointer-events-auto group">
-        <div class="w-14 h-14 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] shadow-sm flex items-center justify-center text-[#C8B69B] group-hover:scale-105 transition">
-          <i data-lucide="sparkles" class="w-7 h-7 text-[#C8B69B]"></i>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+        <!-- JSON Backup & Restore -->
+        <div class="p-6 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] space-y-4 shadow-xs">
+          <h3 class="text-base font-bold text-[#34312D] flex items-center gap-2">
+            <i data-lucide="database" class="w-4 h-4 text-[#C8B69B]"></i> Daten sichern & Wiederherstellen
+          </h3>
+          <p class="text-xs text-[#81796F] leading-relaxed">
+            Lade deine gesamten Fächer, Themen, Notizen und Aufgaben als JSON-Datei herunter oder stelle ein früheres Backup wieder her.
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <button onclick="exportDataJSON()" class="px-4 py-2.5 bg-[#C8B69B] hover:bg-[#B5A182] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs">
+              <i data-lucide="download" class="w-4 h-4"></i> Backup exportieren (JSON)
+            </button>
+            <label class="px-4 py-2.5 bg-[#EAE2D5] hover:bg-[#DED5C8] text-[#34312D] rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer border border-[#DED5C8]">
+              <i data-lucide="upload" class="w-4 h-4"></i> Backup importieren
+              <input type="file" id="import-file-input" accept=".json" onchange="importDataJSON(event)" class="hidden">
+            </label>
+          </div>
         </div>
-        <span class="text-[11px] font-medium text-[#34312D] bg-[#F5F1E8]/80 px-2 py-0.5 rounded shadow-2xs">Donna</span>
+
+        <!-- System Reset -->
+        <div class="p-6 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] space-y-4 shadow-xs">
+          <h3 class="text-base font-bold text-[#34312D] flex items-center gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-[#81796F]"></i> System zurücksetzen
+          </h3>
+          <p class="text-xs text-[#81796F] leading-relaxed">
+            Löscht alle aktuell im Browser gespeicherten Daten unwiderruflich und setzt die Anwendung auf den Werkszustand zurück.
+          </p>
+          <div class="pt-2">
+            <button onclick="confirmResetAllData()" class="px-4 py-2.5 bg-[#F5F1E8] hover:bg-red-50 text-red-700 border border-[#DED5C8] rounded-xl text-xs font-semibold transition">
+              Alle Daten unwiderruflich löschen
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: NEUES FACH ANLEGEN -->
+  <div id="modal-new-subject" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#FFFDF8] border border-[#DED5C8] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-[#DED5C8] pb-3">
+        <h3 class="text-base font-bold text-[#34312D]">Neues Schulfach hinzufügen</h3>
+        <button onclick="closeNewSubjectModal()" class="text-[#81796F] hover:text-[#34312D] p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-[#81796F] mb-1">Fachbezeichnung (z. B. Wirtschaftsinformatik)</label>
+        <input type="text" id="input-new-subject-name" placeholder="Name des Fachs..." required class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3.5 py-2.5 text-xs text-[#34312D] focus:outline-none focus:border-[#C8B69B]">
+      </div>
+      <div class="pt-2 flex justify-end gap-2">
+        <button onclick="closeNewSubjectModal()" class="px-4 py-2 rounded-xl bg-[#EAE2D5] text-[#34312D] text-xs font-semibold">Abbrechen</button>
+        <button onclick="saveNewSubjectSubmit()" class="px-4 py-2 rounded-xl bg-[#C8B69B] text-white text-xs font-bold shadow-xs">Fach anlegen</button>
       </div>
     </div>
-
-    <!-- MAIN APP WINDOW CONTAINER -->
-    <div id="window-container" class="absolute inset-4 md:inset-6 z-10 flex flex-col pointer-events-none">
-      <!-- Dynamic Windows injected here -->
-    </div>
-
   </div>
 
-  <!-- macOS DOCK -->
-  <nav class="h-16 dock-glass border-t border-[#DED5C8] flex items-center justify-center px-4 z-40 shrink-0">
-    <div class="flex items-center gap-2 md:gap-3 px-3 py-1.5 rounded-2xl bg-[#FFFDF8]/60 border border-[#DED5C8]/80 shadow-md">
-      
-      <button onclick="openApp('dashboard')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Dashboard">
-        <i data-lucide="layout-dashboard" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Dashboard</span>
-      </button>
-
-      <button onclick="openApp('finder')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Finder">
-        <i data-lucide="folder" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Finder</span>
-      </button>
-
-      <button onclick="openApp('kalender')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Kalender">
-        <i data-lucide="calendar" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Kalender</span>
-      </button>
-
-      <button onclick="openApp('erinnerungen')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Erinnerungen">
-        <i data-lucide="check-square" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Erinnerungen</span>
-      </button>
-
-      <button onclick="openApp('notizen')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Notizen">
-        <i data-lucide="file-text" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Notizen</span>
-      </button>
-
-      <button onclick="openApp('lernen')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Lernen">
-        <i data-lucide="graduation-cap" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Lernen</span>
-      </button>
-
-      <button onclick="openApp('donna')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Donna">
-        <i data-lucide="sparkles" class="w-6 h-6 text-[#C8B69B]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Donna</span>
-      </button>
-
-      <button onclick="openApp('rechner')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Rechner">
-        <i data-lucide="calculator" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Rechner</span>
-      </button>
-
-      <div class="w-px h-6 bg-[#DED5C8] mx-1"></div>
-
-      <button onclick="openApp('einstellungen')" class="group relative p-2 rounded-xl hover:bg-[#EAE2D5] transition active:scale-95" title="Einstellungen">
-        <i data-lucide="settings" class="w-6 h-6 text-[#34312D]"></i>
-        <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#34312D] text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">Einstellungen</span>
-      </button>
-
+  <!-- MODAL: AUFGABE BEARBEITEN -->
+  <div id="modal-edit-task" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#FFFDF8] border border-[#DED5C8] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-[#DED5C8] pb-3">
+        <h3 class="text-base font-bold text-[#34312D]">Aufgabe bearbeiten</h3>
+        <button onclick="closeEditTaskModal()" class="text-[#81796F] hover:text-[#34312D] p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="hidden" id="edit-task-id">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-[#81796F] mb-1">Titel der Aufgabe</label>
+          <input type="text" id="edit-task-title" class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3.5 py-2 text-xs text-[#34312D] focus:outline-none focus:border-[#C8B69B]">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[#81796F] mb-1">Kategorie</label>
+          <select id="edit-task-category" class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3 py-2 text-xs text-[#34312D] focus:outline-none focus:border-[#C8B69B]">
+            <option value="Schule">Schule</option>
+            <option value="Lernen">Lernen</option>
+            <option value="Privat">Privat</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[#81796F] mb-1">Fälligkeitsdatum</label>
+          <input type="date" id="edit-task-date" class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3 py-2 text-xs text-[#34312D] focus:outline-none focus:border-[#C8B69B]">
+        </div>
+      </div>
+      <div class="pt-2 flex justify-end gap-2">
+        <button onclick="closeEditTaskModal()" class="px-4 py-2 rounded-xl bg-[#EAE2D5] text-[#34312D] text-xs font-semibold">Abbrechen</button>
+        <button onclick="saveTaskChanges()" class="px-4 py-2 rounded-xl bg-[#C8B69B] text-white text-xs font-bold shadow-xs">Speichern</button>
+      </div>
     </div>
-  </nav>
+  </div>
 
-  <!-- JAVASCRIPT APP LOGIC -->
+  <!-- APPLICATION JAVASCRIPT LOGIC -->
   <script>
-    // CORE APPLICATION STATE
-    let appState = {
-      theme: { bg: '#F5F1E8', sidebar: '#EAE2D5', window: '#FFFDF8', text: '#34312D', accent: '#C8B69B' },
-      supabase: { url: '', key: '', active: false },
+    const defaultData = {
       subjects: [
-        { id: 1, name: "IT-Systeme", topics: [{ id: 101, title: "Wasserfallmodell", notes: "Lineares Vorgehensmodell.", subtopics: [{ id: 1001, title: "Analyse", status: "Verstanden" }] }] },
+        {
+          id: 1,
+          name: "IT-Systeme",
+          topics: [
+            {
+              id: 101,
+              title: "Wasserfallmodell",
+              notes: "Das Wasserfallmodell ist ein lineares, sequenzielles Vorgehensmodell in der Softwareentwicklung.",
+              subtopics: [
+                { id: 1001, title: "Analyse (Anforderungen erfassen)", status: "Verstanden" },
+                { id: 1002, title: "Entwurf (Systemarchitektur)", status: "Gerade am Lernen" },
+                { id: 1003, title: "Implementierung (Programmierung)", status: "Verstanden" },
+                { id: 1004, title: "Integration & Systemtest", status: "Noch nicht gelernt" },
+                { id: 1005, title: "Test (Abnahme)", status: "Selbstständig anwendbar" },
+                { id: 1006, title: "Installation & Übergabe", status: "Noch nicht gelernt" },
+                { id: 1007, title: "Einsatz & Betrieb", status: "Noch nicht gelernt" },
+                { id: 1008, title: "Wartung & Instandhaltung", status: "Noch nicht gelernt" },
+                { id: 1009, title: "Lastenheft vs. Pflichtenheft", status: "Verstanden" }
+              ]
+            }
+          ]
+        },
         { id: 2, name: "BWL", topics: [] },
         { id: 3, name: "Französisch", topics: [] },
         { id: 4, name: "Deutsch", topics: [] },
         { id: 5, name: "Mathematik", topics: [] }
       ],
       tasks: [
-        { id: 1, title: "Hausaufgaben BWL machen", category: "Schule", date: "2026-11-04", completed: false }
-      ],
-      calendar: [
-        { id: 1, title: "Klausur IT-Systeme", date: "2026-11-10", type: "Prüfung" }
-      ],
-      notes: [
-        { id: 1, title: "Wichtige Formeln", content: "Break-Even = Fixkosten / (Preis - vK)", folder: "Fachabi" }
-      ],
-      folders: ["Fachabi", "BWL", "IT-Systeme", "Französisch", "Privat"],
-      donnaMessages: [
-        { sender: 'donna', text: "Guten Tag, Boss. Ich bin Donna. Ich verwalte deine Termine, Aufgaben und helfe dir beim Fachabi. Was machen wir als Erstes?" }
+        { id: 1, title: "Wasserfallmodell Unterthemen lernen", category: "Lernen", date: "2026-11-03", completed: false },
+        { id: 2, title: "BWL Kosten- und Leistungsrechnung wiederholen", category: "Schule", date: "2026-11-04", completed: false }
       ]
     };
 
-    let activeWindows = {};
+    let appState = JSON.parse(JSON.stringify(defaultData));
+    let activeTopicContext = { subjectId: null, topicId: null };
+    let currentTaskFilter = 'all';
 
     document.addEventListener("DOMContentLoaded", function() {
       loadLocalStorage();
-      initClock();
-      openApp('dashboard');
+      renderAll();
       lucide.createIcons();
     });
 
     function loadLocalStorage() {
-      const saved = localStorage.getItem("northstar_mac_v4_data");
+      const saved = localStorage.getItem("northstar_office_beige_data");
       if (saved) {
-        try { appState = JSON.parse(saved); } catch(e) {}
+        try {
+          appState = JSON.parse(saved);
+        } catch(e) {
+          console.error("Failed to parse LocalStorage data", e);
+        }
       }
     }
 
     function saveLocalStorage() {
-      localStorage.setItem("northstar_mac_v4_data", JSON.stringify(appState));
-      syncWithSupabase();
+      localStorage.setItem("northstar_office_beige_data", JSON.stringify(appState));
     }
 
-    function initClock() {
-      setInterval(() => {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById("topbar-clock").innerText = timeStr;
-      }, 1000);
-    }
-
-    // WINDOW MANAGER
-    function openApp(appId) {
-      document.getElementById("topbar-active-app").innerText = appId.charAt(0).toUpperCase() + appId.slice(1);
-      
-      const container = document.getElementById("window-container");
-      container.innerHTML = ""; // Single window active for clean macOS focus or multi-window
-
-      const win = document.createElement("div");
-      win.className = "mac-window absolute inset-0 md:inset-x-12 md:inset-y-6 bg-[#FFFDF8] rounded-2xl border border-[#DED5C8] flex flex-col pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-150";
-      
-      win.innerHTML = `
-        <!-- Window TitleBar -->
-        <div class="h-11 bg-[#EAE2D5]/80 border-b border-[#DED5C8] flex items-center justify-between px-4 select-none shrink-0">
-          <div class="flex items-center gap-2">
-            <button onclick="closeActiveWindow()" class="w-3.5 h-3.5 rounded-full bg-rose-500 hover:bg-rose-600 border border-rose-600 flex items-center justify-center text-[8px] text-white font-bold">&times;</button>
-            <button onclick="minimizeWindow()" class="w-3.5 h-3.5 rounded-full bg-amber-400 hover:bg-amber-500 border border-amber-500"></button>
-            <button onclick="maximizeWindow()" class="w-3.5 h-3.5 rounded-full bg-emerald-500 hover:bg-emerald-600 border border-emerald-600"></button>
-            <span class="ml-2 text-xs font-bold text-[#34312D] uppercase tracking-wider">${appId}</span>
-          </div>
-          <div class="text-xs text-[#81796F] font-medium">Northstar macOS</div>
-        </div>
-
-        <!-- Window Content Body -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-[#FFFDF8]" id="app-content-body">
-          ${renderAppContent(appId)}
-        </div>
-      `;
-
-      container.appendChild(win);
+    function renderAll() {
+      renderDashboard();
+      renderSubjectsGrid();
+      renderTasks();
       lucide.createIcons();
     }
 
-    function closeActiveWindow() {
-      document.getElementById("window-container").innerHTML = "";
-      document.getElementById("topbar-active-app").innerText = "Desktop";
-    }
+    function switchTab(tabId) {
+      document.querySelectorAll(".content-section").forEach(sec => sec.classList.add("hidden"));
+      const targetSec = document.getElementById(`section-${tabId}`);
+      if (targetSec) targetSec.classList.remove("hidden");
 
-    function minimizeWindow() {
-      document.getElementById("window-container").innerHTML = "";
-    }
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.remove("bg-[#C8B69B]", "text-white", "shadow-sm");
+        btn.classList.add("text-[#34312D]");
+      });
 
-    function maximizeWindow() {
-      // Toggle fullscreen feel
-    }
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.add("bg-[#C8B69B]", "text-white", "shadow-sm");
+        activeNav.classList.remove("text-[#34312D]");
+      }
 
-    // APP CONTENT RENDERER
-    function renderAppContent(appId) {
-      switch(appId) {
-        case 'dashboard':
-          return `
-            <div class="space-y-6">
-              <div class="p-6 rounded-2xl bg-[#F5F1E8] border border-[#DED5C8] flex justify-between items-center">
-                <div>
-                  <h2 class="text-2xl font-black text-[#34312D]">Guten Tag, Boss.</h2>
-                  <p class="text-xs text-[#81796F] mt-1">Dein persönlicher Arbeitsplatz ist bereit.</p>
-                </div>
-                <button onclick="openApp('donna')" class="px-4 py-2.5 bg-[#C8B69B] text-white rounded-xl text-xs font-bold flex items-center gap-2">
-                  <i data-lucide="sparkles" class="w-4 h-4"></i> Donna fragen
-                </button>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="p-4 rounded-xl bg-[#F5F1E8] border border-[#DED5C8]">
-                  <p class="text-xs font-bold text-[#81796F]">Offene Aufgaben</p>
-                  <p class="text-2xl font-black text-[#34312D] mt-1">${appState.tasks.filter(t=>!t.completed).length}</p>
-                </div>
-                <div class="p-4 rounded-xl bg-[#F5F1E8] border border-[#DED5C8]">
-                  <p class="text-xs font-bold text-[#81796F]">Anstehende Termine</p>
-                  <p class="text-2xl font-black text-[#34312D] mt-1">${appState.calendar.length}</p>
-                </div>
-                <div class="p-4 rounded-xl bg-[#F5F1E8] border border-[#DED5C8]">
-                  <p class="text-xs font-bold text-[#81796F]">Notizen</p>
-                  <p class="text-2xl font-black text-[#34312D] mt-1">${appState.notes.length}</p>
-                </div>
-              </div>
-            </div>
-          `;
-
-        case 'finder':
-          return `
-            <div class="space-y-4">
-              <div class="flex justify-between items-center border-b border-[#DED5C8] pb-3">
-                <h3 class="text-lg font-bold text-[#34312D]">Finder & Dokumente</h3>
-                <button onclick="promptNewNote()" class="px-3 py-1.5 bg-[#C8B69B] text-white rounded-xl text-xs font-bold">+ Neue Notiz</button>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="space-y-1 bg-[#F5F1E8] p-3 rounded-xl border border-[#DED5C8]">
-                  <p class="text-xs font-bold text-[#81796F] mb-2 uppercase">Ordner</p>
-                  ${appState.folders.map(f => `<div class="p-2 text-xs font-semibold rounded hover:bg-[#FFFDF8] cursor-pointer">${f}</div>`).join('')}
-                </div>
-                <div class="md:col-span-3 space-y-2">
-                  <p class="text-xs font-bold text-[#81796F] uppercase">Dateien</p>
-                  ${appState.notes.map(n => `
-                    <div class="p-3 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] flex justify-between items-center text-xs">
-                      <div>
-                        <p class="font-bold text-[#34312D]">${n.title}</p>
-                        <p class="text-[#81796F] text-[11px]">${n.content}</p>
-                      </div>
-                      <span class="px-2 py-0.5 bg-[#EAE2D5] rounded text-[10px] font-bold">${n.folder}</span>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-          `;
-
-        case 'erinnerungen':
-        case 'aufgaben':
-          return `
-            <div class="space-y-4">
-              <h3 class="text-lg font-bold text-[#34312D]">Aufgaben & Erinnerungen</h3>
-              <div class="flex gap-2">
-                <input type="text" id="new-task-input" placeholder="Neue Aufgabe..." class="flex-1 bg-[#F5F1E8] border border-[#DED5C8] rounded-xl px-3.5 py-2 text-xs">
-                <button onclick="addTaskFromApp()" class="px-4 py-2 bg-[#C8B69B] text-white rounded-xl text-xs font-bold">Hinzufügen</button>
-              </div>
-              <div class="space-y-2">
-                ${appState.tasks.map(t => `
-                  <div class="p-3 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] flex justify-between items-center text-xs">
-                    <span class="${t.completed ? 'line-through text-[#81796F]' : 'font-bold text-[#34312D]'}">${t.title} (${t.category})</span>
-                    <button onclick="toggleTask(${t.id})" class="px-2.5 py-1 rounded bg-[#EAE2D5] font-bold">${t.completed ? 'Erledigt' : 'Offen'}</button>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          `;
-
-        case 'kalender':
-          return `
-            <div class="space-y-4">
-              <h3 class="text-lg font-bold text-[#34312D]">Kalender & Termine</h3>
-              <div class="space-y-2">
-                ${appState.calendar.map(c => `
-                  <div class="p-3 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] flex justify-between items-center text-xs">
-                    <span class="font-bold text-[#34312D]">${c.title}</span>
-                    <span class="text-[#81796F] font-semibold">${c.date}</span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          `;
-
-        case 'notizen':
-          return `
-            <div class="space-y-4">
-              <h3 class="text-lg font-bold text-[#34312D]">Notizen</h3>
-              <textarea rows="12" class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl p-4 text-xs font-mono" placeholder="Schreibe deine Gedanken hier..."></textarea>
-            </div>
-          `;
-
-        case 'lernen':
-          return `
-            <div class="space-y-4">
-              <h3 class="text-lg font-bold text-[#34312D]">School Office & Fachabi</h3>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                ${appState.subjects.map(s => `
-                  <div class="p-4 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] space-y-2">
-                    <h4 class="font-bold text-[#34312D]">${s.name}</h4>
-                    <p class="text-xs text-[#81796F]">${s.topics.length} Themen</p>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          `;
-
-        case 'donna':
-          return `
-            <div class="flex flex-col h-[500px] bg-[#F5F1E8] rounded-2xl border border-[#DED5C8] p-4">
-              <div class="flex items-center gap-3 border-b border-[#DED5C8] pb-3 mb-3">
-                <div class="w-9 h-9 rounded-full bg-[#C8B69B] flex items-center justify-center text-white font-black text-sm">DP</div>
-                <div>
-                  <h4 class="text-xs font-bold text-[#34312D]">Donna Paulsen</h4>
-                  <p class="text-[10px] text-[#81796F]">Executive Assistant & AI</p>
-                </div>
-              </div>
-              
-              <div id="donna-chat-messages" class="flex-1 overflow-y-auto space-y-3 pr-2">
-                ${appState.donnaMessages.map(m => `
-                  <div class="flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}">
-                    <div class="max-w-[80%] p-3 rounded-2xl text-xs ${m.sender === 'user' ? 'bg-[#C8B69B] text-white rounded-br-xs' : 'bg-[#FFFDF8] border border-[#DED5C8] text-[#34312D] rounded-bl-xs'}">
-                      ${m.text}
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-
-              <div class="mt-3 flex gap-2">
-                <input type="text" id="donna-input" onkeypress="handleDonnaKey(event)" placeholder="Schreibe Donna (z.B. 'Ich habe morgen Hausaufgaben in BWL')..." class="flex-1 bg-[#FFFDF8] border border-[#DED5C8] rounded-xl px-3.5 py-2.5 text-xs">
-                <button onclick="sendDonnaMessage()" class="px-4 py-2.5 bg-[#C8B69B] text-white rounded-xl text-xs font-bold">Senden</button>
-              </div>
-            </div>
-          `;
-
-        case 'rechner':
-          return `
-            <div class="max-w-xs mx-auto space-y-3">
-              <input type="text" id="calc-display" readonly value="0" class="w-full bg-[#F5F1E8] border border-[#DED5C8] rounded-xl p-3 text-right text-lg font-mono font-bold">
-              <div class="grid grid-cols-4 gap-2">
-                <button onclick="calcAppend('7')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">7</button>
-                <button onclick="calcAppend('8')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">8</button>
-                <button onclick="calcAppend('9')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">9</button>
-                <button onclick="calcAppend('/')" class="p-3 bg-[#EAE2D5] rounded-xl font-bold">/</button>
-                <button onclick="calcAppend('4')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">4</button>
-                <button onclick="calcAppend('5')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">5</button>
-                <button onclick="calcAppend('6')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">6</button>
-                <button onclick="calcAppend('*')" class="p-3 bg-[#EAE2D5] rounded-xl font-bold">*</button>
-                <button onclick="calcAppend('1')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">1</button>
-                <button onclick="calcAppend('2')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">2</button>
-                <button onclick="calcAppend('3')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">3</button>
-                <button onclick="calcAppend('-')" class="p-3 bg-[#EAE2D5] rounded-xl font-bold">-</button>
-                <button onclick="calcClear()" class="p-3 bg-red-100 text-red-700 rounded-xl font-bold">C</button>
-                <button onclick="calcAppend('0')" class="p-3 bg-[#F5F1E8] rounded-xl font-bold">0</button>
-                <button onclick="calcEval()" class="p-3 bg-[#C8B69B] text-white rounded-xl font-bold">=</button>
-                <button onclick="calcAppend('+')" class="p-3 bg-[#EAE2D5] rounded-xl font-bold">+</button>
-              </div>
-            </div>
-          `;
-
-        case 'einstellungen':
-          return `
-            <div class="space-y-6 max-w-xl">
-              <h3 class="text-lg font-bold text-[#34312D]">Systemeinstellungen & Cloud Sync</h3>
-              
-              <div class="p-4 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] space-y-3">
-                <h4 class="text-xs font-bold uppercase text-[#81796F]">Supabase Cloud Sync</h4>
-                <p class="text-xs text-[#81796F]">Verbinde deine Supabase Datenbank, um Daten geräteübergreifend zu synchronisieren.</p>
-                <input type="text" id="supa-url" placeholder="Supabase Project URL" value="${appState.supabase.url}" class="w-full bg-[#FFFDF8] border border-[#DED5C8] rounded-xl px-3 py-2 text-xs">
-                <input type="password" id="supa-key" placeholder="Supabase Anon Key" value="${appState.supabase.key}" class="w-full bg-[#FFFDF8] border border-[#DED5C8] rounded-xl px-3 py-2 text-xs">
-                <button onclick="saveSupabaseSettings()" class="px-4 py-2 bg-[#C8B69B] text-white rounded-xl text-xs font-bold">Cloud Sync aktivieren</button>
-              </div>
-
-              <div class="p-4 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] space-y-3">
-                <h4 class="text-xs font-bold uppercase text-[#81796F]">Datensicherung (JSON)</h4>
-                <div class="flex gap-2">
-                  <button onclick="exportJSON()" class="px-4 py-2 bg-[#C8B69B] text-white rounded-xl text-xs font-bold">Backup exportieren</button>
-                  <label class="px-4 py-2 bg-[#EAE2D5] text-[#34312D] rounded-xl text-xs font-bold cursor-pointer border border-[#DED5C8]">
-                    Backup importieren <input type="file" accept=".json" onchange="importJSON(event)" class="hidden">
-                  </label>
-                </div>
-              </div>
-            </div>
-          `;
-
-        default:
-          return `<p>App nicht gefunden.</p>`;
+      const sidebar = document.getElementById("sidebar");
+      const backdrop = document.getElementById("sidebar-backdrop");
+      if (!sidebar.classList.contains("-translate-x-full")) {
+        sidebar.classList.add("-translate-x-full");
+        backdrop.classList.add("hidden");
       }
     }
 
-    // DONNA AI ASSISTANT NLP PARSER
-    function handleDonnaKey(e) { if (e.key === 'Enter') sendDonnaMessage(); }
+    function toggleMobileMenu() {
+      document.getElementById("sidebar").classList.toggle("-translate-x-full");
+      document.getElementById("sidebar-backdrop").classList.toggle("hidden");
+    }
 
-    function sendDonnaMessage() {
-      const input = document.getElementById("donna-input");
-      const text = input.value.trim();
-      if (!text) return;
-
-      appState.donnaMessages.push({ sender: 'user', text });
-      input.value = "";
-
-      // Donna Natural Language Processing (Suits-inspired loyalty & sharpness)
-      let donnaReply = "Erledigt, Boss. Ich habe das notiert.";
-      const lower = text.toLowerCase();
-
-      if (lower.includes("hausaufgaben") || lower.includes("aufgabe")) {
-        appState.tasks.push({ id: Date.now(), title: text, category: "Schule", date: "Heute", completed: false });
-        donnaReply = "Ich habe die Aufgabe direkt in deinen Erinnerungen und Aufgaben gespeichert. Auf mich ist eben Verlass.";
-      } else if (lower.includes("termin") || lower.includes("klausur") || lower.includes("prüfung")) {
-        appState.calendar.push({ id: Date.now(), title: text, date: "Demnächst", type: "Prüfung" });
-        donnaReply = "Termin eingetragen. Du musst dir keine Sorgen machen, ich passe auf deinen Kalender auf.";
-      } else {
-        donnaReply = `Ich habe deine Notiz verstanden. Als deine Assistentin sorge ich dafür, dass alles reibungslos läuft. Gibt es sonst noch etwas, Boss?`;
-      }
-
-      appState.donnaMessages.push({ sender: 'donna', text: donnaReply });
-      saveLocalStorage();
+    function renderDashboard() {
+      const todayStr = getTodayISO();
       
-      const chatCont = document.getElementById("donna-chat-messages");
-      if (chatCont) {
-        chatCont.innerHTML = appState.donnaMessages.map(m => `
-          <div class="flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}">
-            <div class="max-w-[80%] p-3 rounded-2xl text-xs ${m.sender === 'user' ? 'bg-[#C8B69B] text-white rounded-br-xs' : 'bg-[#FFFDF8] border border-[#DED5C8] text-[#34312D] rounded-bl-xs'}">
-              ${m.text}
+      const openTasks = appState.tasks.filter(t => !t.completed);
+      const overdueTasks = openTasks.filter(t => t.date && t.date < todayStr);
+
+      document.getElementById("dash-open-tasks-count").innerText = openTasks.length;
+      document.getElementById("sidebar-open-count").innerText = openTasks.length;
+      
+      const overdueBadge = document.getElementById("dash-overdue-badge");
+      if (overdueTasks.length > 0) {
+        overdueBadge.classList.remove("hidden");
+      } else {
+        overdueBadge.classList.add("hidden");
+      }
+
+      let totalSubtopics = 0;
+      let learnedSubtopics = 0;
+      let openSubtopicsList = [];
+
+      appState.subjects.forEach(subj => {
+        subj.topics.forEach(top => {
+          top.subtopics.forEach(sub => {
+            totalSubtopics++;
+            if (sub.status === "Verstanden" || sub.status === "Selbstständig anwendbar") {
+              learnedSubtopics++;
+            } else {
+              openSubtopicsList.push({ subjectName: subj.name, topicTitle: top.title, subTitle: sub.title });
+            }
+          });
+        });
+      });
+
+      const overallPercent = totalSubtopics > 0 ? Math.round((learnedSubtopics / totalSubtopics) * 100) : 0;
+      document.getElementById("dash-subjects-count").innerText = appState.subjects.length;
+      document.getElementById("dash-overall-progress-text").innerText = `${overallPercent}%`;
+      document.getElementById("dash-learned-subtopics-ratio").innerText = `${learnedSubtopics}/${totalSubtopics}`;
+
+      const dashTasksCont = document.getElementById("dash-today-tasks-container");
+      dashTasksCont.innerHTML = "";
+
+      if (openTasks.length === 0) {
+        dashTasksCont.innerHTML = `<p class="text-xs text-[#81796F] italic py-2">Keine offenen Aufgaben. Perfekt organisiert!</p>`;
+      } else {
+        const sortedOpen = [...openTasks].sort((a, b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
+        sortedOpen.slice(0, 4).forEach(t => {
+          const isOverdue = t.date && t.date < todayStr;
+          const isToday = t.date === todayStr;
+          
+          const div = document.createElement("div");
+          div.className = `p-3 rounded-xl border flex items-center justify-between gap-3 ${isOverdue ? 'bg-[#F5F1E8] border-[#C8B69B]' : 'bg-[#F5F1E8] border-[#DED5C8]'}`;
+          div.innerHTML = `
+            <div class="flex items-center gap-3 min-w-0">
+              <button onclick="toggleTaskComplete(${t.id})" class="w-5 h-5 rounded border border-[#DED5C8] bg-[#FFFDF8] hover:border-[#C8B69B] flex items-center justify-center shrink-0"></button>
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-[#34312D] truncate">${t.title}</p>
+                <div class="flex items-center gap-2 text-[10px] text-[#81796F] mt-0.5">
+                  <span class="px-1.5 py-0.2 rounded bg-[#EAE2D5] text-[#34312D] font-medium">${t.category}</span>
+                  ${t.date ? `<span class="${isOverdue ? 'text-red-700 font-bold' : 'text-[#81796F]'}">${isOverdue ? '⚠️ Überfällig: ' : ''}${t.date}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+          dashTasksCont.appendChild(div);
+        });
+      }
+
+      const smartStepCont = document.getElementById("dash-smart-next-step");
+      if (overdueTasks.length > 0) {
+        smartStepCont.innerHTML = `
+          <p class="text-xs font-bold text-[#34312D]">Überfällige Aufgabe erledigen:</p>
+          <p class="text-xs text-[#81796F] mt-1">„${overdueTasks[0].title}“ steht aus.</p>
+          <button onclick="switchTab('tasks')" class="text-xs text-[#34312D] hover:underline font-semibold mt-2 inline-block">Zur Aufgabenplanung &rarr;</button>
+        `;
+      } else if (openSubtopicsList.length > 0) {
+        const nextSub = openSubtopicsList[0];
+        smartStepCont.innerHTML = `
+          <p class="text-xs font-bold text-[#34312D]">Lernthema vertiefen:</p>
+          <p class="text-xs text-[#81796F] mt-1">Lerne <strong>${nextSub.subTitle}</strong> in <strong>${nextSub.subjectName}</strong>.</p>
+          <button onclick="switchTab('lernen')" class="text-xs text-[#34312D] hover:underline font-semibold mt-2 inline-block">Zum Lernbereich &rarr;</button>
+        `;
+      } else {
+        smartStepCont.innerHTML = `
+          <p class="text-xs font-bold text-[#34312D]">Alles im grünen Bereich!</p>
+          <p class="text-xs text-[#81796F] mt-1">Alle Unterthemen verstanden und Aufgaben erledigt.</p>
+        `;
+      }
+
+      const openLearnCont = document.getElementById("dash-open-learning-items");
+      openLearnCont.innerHTML = "";
+      if (openSubtopicsList.length === 0) {
+        openLearnCont.innerHTML = `<p class="text-xs text-[#81796F] italic">Alle Themen wurden verstanden.</p>`;
+      } else {
+        openSubtopicsList.slice(0, 3).forEach(item => {
+          const div = document.createElement("div");
+          div.className = "p-2.5 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] text-xs flex justify-between items-center";
+          div.innerHTML = `
+            <span class="text-[#34312D] font-medium truncate">${item.subTitle}</span>
+            <span class="text-[10px] text-[#34312D] font-bold px-2 py-0.5 rounded bg-[#EAE2D5] shrink-0">${item.subjectName}</span>
+          `;
+          openLearnCont.appendChild(div);
+        });
+      }
+    }
+
+    function renderSubjectsGrid() {
+      const container = document.getElementById("subjects-grid");
+      container.innerHTML = "";
+
+      appState.subjects.forEach(subj => {
+        let subjTotal = 0;
+        let subjLearned = 0;
+
+        subj.topics.forEach(t => {
+          t.subtopics.forEach(sub => {
+            subjTotal++;
+            if (sub.status === "Verstanden" || sub.status === "Selbstständig anwendbar") subjLearned++;
+          });
+        });
+
+        const subjPercent = subjTotal > 0 ? Math.round((subjLearned / subjTotal) * 100) : 0;
+
+        const card = document.createElement("div");
+        card.className = "p-5 rounded-2xl bg-[#FFFDF8] border border-[#DED5C8] space-y-4 shadow-xs flex flex-col justify-between";
+        
+        let topicsHtml = "";
+        if (subj.topics.length === 0) {
+          topicsHtml = `<p class="text-xs text-[#81796F] italic py-2">Noch keine Themen angelegt.</p>`;
+        } else {
+          subj.topics.forEach(top => {
+            let topTotal = top.subtopics.length;
+            let topLearned = top.subtopics.filter(s => s.status === "Verstanden" || s.status === "Selbstständig anwendbar").length;
+            let topPercent = topTotal > 0 ? Math.round((topLearned / topTotal) * 100) : 0;
+
+            topicsHtml += `
+              <div onclick="openTopicDetail(${subj.id}, ${top.id})" class="p-3 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] cursor-pointer hover:border-[#C8B69B] transition space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-[#34312D] truncate">${top.title}</span>
+                  <span class="text-[10px] font-bold text-[#81796F]">${topLearned}/${topTotal}</span>
+                </div>
+                <div class="w-full bg-[#EAE2D5] h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-[#C8B69B] h-full rounded-full transition-all" style="width: ${topPercent}%"></div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        card.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-[#DED5C8] pb-3">
+              <div>
+                <h3 class="text-base font-bold text-[#34312D]">${subj.name}</h3>
+                <p class="text-[11px] text-[#81796F] mt-0.5">${subjLearned} von ${subjTotal} Unterthemen verstanden</p>
+              </div>
+              <button onclick="deleteSubject(${subj.id})" title="Fach löschen" class="p-1.5 text-[#81796F] hover:text-red-700 rounded-lg">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px]">
+                <span class="text-[#81796F]">Fortschritt</span>
+                <span class="font-bold text-[#34312D]">${subjPercent}%</span>
+              </div>
+              <div class="w-full bg-[#EAE2D5] h-2 rounded-full overflow-hidden">
+                <div class="bg-[#C8B69B] h-full rounded-full transition-all" style="width: ${subjPercent}%"></div>
+              </div>
+            </div>
+
+            <div class="space-y-2 pt-2">
+              ${topicsHtml}
             </div>
           </div>
-        `).join('');
-        chatCont.scrollTop = chatCont.scrollHeight;
-      }
+
+          <div class="pt-3 border-t border-[#DED5C8]">
+            <button onclick="promptAddTopic(${subj.id})" class="w-full py-2 bg-[#EAE2D5] hover:bg-[#DED5C8] text-[#34312D] rounded-xl text-xs font-semibold border border-[#DED5C8] transition flex items-center justify-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Thema hinzufügen
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
     }
 
-    // SUPABASE CLOUD SYNC
-    let supabaseClient = null;
-    function saveSupabaseSettings() {
-      const url = document.getElementById("supa-url").value.trim();
-      const key = document.getElementById("supa-key").value.trim();
-      if (url && key) {
-        appState.supabase = { url, key, active: true };
+    function openTopicDetail(subjectId, topicId) {
+      activeTopicContext = { subjectId, topicId };
+      const subject = appState.subjects.find(s => s.id === subjectId);
+      const topic = subject.topics.find(t => t.id === topicId);
+
+      document.getElementById("detail-subject-tag").innerText = subject.name;
+      document.getElementById("detail-topic-title").innerText = topic.title;
+      document.getElementById("topic-notes-editor").value = topic.notes || "";
+
+      renderSubtopicsList(topic);
+      document.getElementById("topic-detail-card").classList.remove("hidden");
+      document.getElementById("topic-detail-card").scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeTopicDetail() {
+      document.getElementById("topic-detail-card").classList.add("hidden");
+      activeTopicContext = { subjectId: null, topicId: null };
+    }
+
+    function renderSubtopicsList(topic) {
+      const container = document.getElementById("subtopics-container");
+      container.innerHTML = "";
+
+      let total = topic.subtopics.length;
+      let learned = topic.subtopics.filter(s => s.status === "Verstanden" || s.status === "Selbstständig anwendbar").length;
+      let percent = total > 0 ? Math.round((learned / total) * 100) : 0;
+      document.getElementById("detail-topic-progress-text").innerText = `${percent}% Verstanden (${learned}/${total})`;
+
+      const statuses = ["Noch nicht gelernt", "Gerade am Lernen", "Verstanden", "Selbstständig anwendbar"];
+
+      topic.subtopics.forEach(sub => {
+        const div = document.createElement("div");
+        div.className = "p-3 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] space-y-2";
+        
+        let statusPills = `<div class="flex items-center gap-1 flex-wrap">`;
+        statuses.forEach(st => {
+          const isActive = sub.status === st;
+          statusPills += `
+            <button onclick="setSubtopicStatus(${sub.id}, '${st}')" class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${isActive ? 'bg-[#C8B69B] text-white' : 'bg-[#EAE2D5] text-[#81796F] hover:text-[#34312D]'}">
+              ${st}
+            </button>
+          `;
+        });
+        statusPills += `</div>`;
+
+        div.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-[#34312D]">${sub.title}</span>
+            <div class="flex items-center gap-1">
+              <button onclick="editSubtopicTitle(${sub.id})" title="Bearbeiten" class="p-1 text-[#81796F] hover:text-[#34312D]"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+              <button onclick="deleteSubtopic(${sub.id})" title="Löschen" class="p-1 text-[#81796F] hover:text-red-700"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+          ${statusPills}
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    function setSubtopicStatus(subId, newStatus) {
+      const subject = appState.subjects.find(s => s.id === activeTopicContext.subjectId);
+      const topic = subject.topics.find(t => t.id === activeTopicContext.topicId);
+      const sub = topic.subtopics.find(s => s.id === subId);
+      if (sub) {
+        sub.status = newStatus;
         saveLocalStorage();
-        initSupabase();
-        alert("Supabase Cloud Sync erfolgreich eingerichtet!");
+        renderSubtopicsList(topic);
+        renderSubjectsGrid();
+        renderDashboard();
       }
     }
 
-    function initSupabase() {
-      if (appState.supabase.active && window.supabase) {
-        supabaseClient = window.supabase.createClient(appState.supabase.url, appState.supabase.key);
-        document.getElementById("sync-status-indicator").innerHTML = `<i data-lucide="cloud" class="w-3.5 h-3.5 text-emerald-600"></i><span class="hidden md:inline">Cloud Sync aktiv</span>`;
-        lucide.createIcons();
+    function saveTopicNotes() {
+      if (!activeTopicContext.topicId) return;
+      const subject = appState.subjects.find(s => s.id === activeTopicContext.subjectId);
+      const topic = subject.topics.find(t => t.id === activeTopicContext.topicId);
+      topic.notes = document.getElementById("topic-notes-editor").value;
+      saveLocalStorage();
+    }
+
+    function editCurrentTopicTitle() {
+      const subject = appState.subjects.find(s => s.id === activeTopicContext.subjectId);
+      const topic = subject.topics.find(t => t.id === activeTopicContext.topicId);
+      const newTitle = prompt("Neuer Name für dieses Thema:", topic.title);
+      if (newTitle && newTitle.trim()) {
+        topic.title = newTitle.trim();
+        saveLocalStorage();
+        document.getElementById("detail-topic-title").innerText = topic.title;
+        renderSubjectsGrid();
       }
     }
 
-    async function syncWithSupabase() {
-      if (!supabaseClient) return;
-      try {
-        await supabaseClient.from('northstar_sync').upsert({ id: 1, data: appState });
-      } catch(e) {
-        console.error("Sync error", e);
+    function deleteCurrentTopic() {
+      if (confirm("Möchtest du dieses Thema wirklich löschen?")) {
+        const subject = appState.subjects.find(s => s.id === activeTopicContext.subjectId);
+        subject.topics = subject.topics.filter(t => t.id !== activeTopicContext.topicId);
+        saveLocalStorage();
+        closeTopicDetail();
+        renderSubjectsGrid();
+        renderDashboard();
       }
     }
 
-    // APP UTILS
-    function addTaskFromApp() {
-      const title = document.getElementById("new-task-input").value.trim();
+    function promptAddTopic(subjectId) {
+      const title = prompt("Name des neuen Themas:");
+      if (title && title.trim()) {
+        const subject = appState.subjects.find(s => s.id === subjectId);
+        const newTopic = {
+          id: Date.now(),
+          title: title.trim(),
+          notes: "",
+          subtopics: [
+            { id: Date.now() + 1, title: "Grundlagen & Begriffe", status: "Noch nicht gelernt" },
+            { id: Date.now() + 2, title: "Praxisanwendung & Übung", status: "Noch nicht gelernt" }
+          ]
+        };
+        subject.topics.push(newTopic);
+        saveLocalStorage();
+        renderSubjectsGrid();
+      }
+    }
+
+    function promptAddSubtopic() {
+      const title = prompt("Name des Unterthemas:");
+      if (title && title.trim() && activeTopicContext.topicId) {
+        const subject = appState.subjects.find(s => s.id === activeTopicContext.subjectId);
+        const topic = subject.topics.find(t => t.id === activeTopicContext.topicId);
+        topic.subtopics.push({ id: Date.now(), title: title.trim(), status: "Noch nicht gelernt" });
+        saveLocalStorage();
+        renderSubtopicsList(topic);
+        renderSubjectsGrid();
+        renderDashboard();
+      }
+    }
+
+    function editSubtopicTitle(subId) {
+      const subject = appState.subjects.find(s => s.id === activeTopicContext.subjectId);
+      const topic = subject.topics.find(t => t.id === activeTopicContext.topicId);
+      const sub = topic.subtopics.find(s => s.id === subId);
+      const newTitle = prompt("Unterthema umbenennen:", sub.title);
+      if (newTitle && newTitle.trim()) {
+        sub.title = newTitle.trim();
+        saveLocalStorage();
+        renderSubtopicsList(topic);
+      }
+    }
+
+    function deleteSubtopic(subId) {
+      const subject = appState.subjects.find(s => s.id === activeTopicContext.subjectId);
+      const topic = subject.topics.find(t => t.id === activeTopicContext.topicId);
+      topic.subtopics = topic.subtopics.filter(s => s.id !== subId);
+      saveLocalStorage();
+      renderSubtopicsList(topic);
+      renderSubjectsGrid();
+      renderDashboard();
+    }
+
+    function openNewSubjectModal() {
+      document.getElementById("modal-new-subject").classList.remove("hidden");
+    }
+
+    function closeNewSubjectModal() {
+      document.getElementById("modal-new-subject").classList.add("hidden");
+    }
+
+    function saveNewSubjectSubmit() {
+      const name = document.getElementById("input-new-subject-name").value.trim();
+      if (name) {
+        appState.subjects.push({ id: Date.now(), name, topics: [] });
+        saveLocalStorage();
+        renderSubjectsGrid();
+        renderDashboard();
+        closeNewSubjectModal();
+        document.getElementById("input-new-subject-name").value = "";
+      }
+    }
+
+    function deleteSubject(subjectId) {
+      if (confirm("Möchtest du dieses Schulfach samt aller Themen löschen?")) {
+        appState.subjects = appState.subjects.filter(s => s.id !== subjectId);
+        saveLocalStorage();
+        renderSubjectsGrid();
+        renderDashboard();
+      }
+    }
+
+    function renderTasks() {
+      const openCont = document.getElementById("open-tasks-list");
+      const compCont = document.getElementById("comp-tasks-list");
+      openCont.innerHTML = "";
+      compCont.innerHTML = "";
+
+      const todayStr = getTodayISO();
+
+      const filtered = appState.tasks.filter(t => currentTaskFilter === 'all' || t.category === currentTaskFilter);
+      const openTasks = filtered.filter(t => !t.completed).sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1);
+      const compTasks = filtered.filter(t => t.completed);
+
+      document.getElementById("badge-open-tasks-count").innerText = openTasks.length;
+      document.getElementById("badge-comp-tasks-count").innerText = compTasks.length;
+
+      if (openTasks.length === 0) {
+        openCont.innerHTML = `<p class="text-xs text-[#81796F] italic py-2">Keine offenen Aufgaben.</p>`;
+      } else {
+        openTasks.forEach(task => {
+          const isOverdue = task.date && task.date < todayStr;
+
+          const div = document.createElement("div");
+          div.className = `p-3.5 rounded-xl border flex items-center justify-between gap-3 ${isOverdue ? 'bg-[#F5F1E8] border-[#C8B69B]' : 'bg-[#F5F1E8] border-[#DED5C8]'}`;
+          div.innerHTML = `
+            <div class="flex items-center gap-3 min-w-0">
+              <button onclick="toggleTaskComplete(${task.id})" class="w-5 h-5 rounded border border-[#DED5C8] bg-[#FFFDF8] hover:border-[#C8B69B] flex items-center justify-center shrink-0"></button>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-[#34312D] truncate">${task.title}</p>
+                <div class="flex items-center gap-2 text-[10px] text-[#81796F] mt-0.5">
+                  <span class="px-1.5 py-0.2 rounded bg-[#EAE2D5] font-semibold">${task.category}</span>
+                  ${task.date ? `<span class="${isOverdue ? 'text-red-700 font-bold' : ''}">${isOverdue ? '⚠️ Überfällig: ' : ''}${task.date}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="openEditTaskModal(${task.id})" class="p-1.5 text-[#81796F] hover:text-[#34312D]"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+              <button onclick="deleteTask(${task.id})" class="p-1.5 text-[#81796F] hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          `;
+          openCont.appendChild(div);
+        });
+      }
+
+      if (compTasks.length === 0) {
+        compCont.innerHTML = `<p class="text-xs text-[#81796F] italic py-2">Keine erledigten Aufgaben.</p>`;
+      } else {
+        compTasks.forEach(task => {
+          const div = document.createElement("div");
+          div.className = "p-3 rounded-xl bg-[#F5F1E8] border border-[#DED5C8] flex items-center justify-between gap-3";
+          div.innerHTML = `
+            <div class="flex items-center gap-3 min-w-0">
+              <button onclick="toggleTaskComplete(${task.id})" class="w-5 h-5 rounded bg-[#C8B69B] text-white flex items-center justify-center shrink-0">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              </button>
+              <p class="text-xs font-medium text-[#81796F] line-through truncate">${task.title}</p>
+            </div>
+            <button onclick="deleteTask(${task.id})" class="p-1.5 text-[#81796F] hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          `;
+          compCont.appendChild(div);
+        });
+      }
+
+      lucide.createIcons();
+    }
+
+    function handleAddTaskSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById("task-in-title").value.trim();
+      const category = document.getElementById("task-in-cat").value;
+      const date = document.getElementById("task-in-date").value || getTodayISO();
+
       if (title) {
-        appState.tasks.push({ id: Date.now(), title, category: "Privat", date: "Heute", completed: false });
+        appState.tasks.push({ id: Date.now(), title, category, date, completed: false });
         saveLocalStorage();
-        openApp('aufgaben');
+        renderTasks();
+        renderDashboard();
+        document.getElementById("task-in-title").value = "";
       }
     }
 
-    function toggleTask(id) {
-      const t = appState.tasks.find(x => x.id === id);
-      if (t) { t.completed = !t.completed; saveLocalStorage(); openApp('aufgaben'); }
-    }
-
-    function promptNewNote() {
-      const title = prompt("Notiztitel:");
-      const content = prompt("Inhalt:");
-      if (title) {
-        appState.notes.push({ id: Date.now(), title, content: content || "", folder: "Fachabi" });
+    function toggleTaskComplete(id) {
+      const task = appState.tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = !task.completed;
         saveLocalStorage();
-        openApp('finder');
+        renderTasks();
+        renderDashboard();
       }
     }
 
-    function exportJSON() {
+    function deleteTask(id) {
+      appState.tasks = appState.tasks.filter(t => t.id !== id);
+      saveLocalStorage();
+      renderTasks();
+      renderDashboard();
+    }
+
+    function filterTasks(category) {
+      currentTaskFilter = category;
+      document.querySelectorAll(".task-filter-pill").forEach(btn => {
+        if (btn.getAttribute("data-cat") === category) {
+          btn.classList.add("bg-[#C8B69B]", "text-white");
+          btn.classList.remove("text-[#81796F]");
+        } else {
+          btn.classList.remove("bg-[#C8B69B]", "text-white");
+          btn.classList.add("text-[#81796F]");
+        }
+      });
+      renderTasks();
+    }
+
+    function openEditTaskModal(id) {
+      const task = appState.tasks.find(t => t.id === id);
+      if (task) {
+        document.getElementById("edit-task-id").value = task.id;
+        document.getElementById("edit-task-title").value = task.title;
+        document.getElementById("edit-task-category").value = task.category;
+        document.getElementById("edit-task-date").value = task.date || "";
+        document.getElementById("modal-edit-task").classList.remove("hidden");
+      }
+    }
+
+    function closeEditTaskModal() {
+      document.getElementById("modal-edit-task").classList.add("hidden");
+    }
+
+    function saveTaskChanges() {
+      const id = parseInt(document.getElementById("edit-task-id").value);
+      const task = appState.tasks.find(t => t.id === id);
+      if (task) {
+        task.title = document.getElementById("edit-task-title").value.trim();
+        task.category = document.getElementById("edit-task-category").value;
+        task.date = document.getElementById("edit-task-date").value;
+        saveLocalStorage();
+        renderTasks();
+        renderDashboard();
+        closeEditTaskModal();
+      }
+    }
+
+    function handleGoogleSearchSubmit(e) {
+      e.preventDefault();
+      const query = document.getElementById("google-search-bar").value.trim();
+      if (query) {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+      }
+    }
+
+    function exportDataJSON() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
-      const a = document.createElement('a');
-      a.setAttribute("href", dataStr);
-      a.setAttribute("download", `northstar_backup_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `northstar_beige_backup_${getTodayISO()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
     }
 
-    function importJSON(e) {
+    function importDataJSON(e) {
       const file = e.target.files[0];
       if (!file) return;
+
       const reader = new FileReader();
       reader.onload = function(evt) {
         try {
-          appState = JSON.parse(evt.target.result);
-          saveLocalStorage();
-          openApp('dashboard');
-          alert("Backup erfolgreich importiert!");
-        } catch(err) { alert("Fehler beim Importieren."); }
+          const imported = JSON.parse(evt.target.result);
+          if (imported.subjects && imported.tasks) {
+            appState = imported;
+            saveLocalStorage();
+            renderAll();
+            alert("Backup erfolgreich importiert!");
+          } else {
+            alert("Ungültiges Dateiformat.");
+          }
+        } catch(err) {
+          alert("Fehler beim Lesen der JSON-Datei.");
+        }
       };
       reader.readAsText(file);
     }
 
-    // CALCULATOR
-    let calcVal = "";
-    function calcAppend(char) { calcVal += char; document.getElementById("calc-display").value = calcVal; }
-    function calcClear() { calcVal = ""; document.getElementById("calc-display").value = "0"; }
-    function calcEval() { try { calcVal = eval(calcVal).toString(); document.getElementById("calc-display").value = calcVal; } catch(e) { document.getElementById("calc-display").value = "Fehler"; calcVal = ""; } }
+    function confirmResetAllData() {
+      if (confirm("Möchtest du wirklich alle Daten löschen? Dies kann nicht rückgängig gemacht werden.")) {
+        localStorage.removeItem("northstar_office_beige_data");
+        appState = JSON.parse(JSON.stringify(defaultData));
+        saveLocalStorage();
+        renderAll();
+        alert("Das System wurde auf die Standarddaten zurückgesetzt.");
+      }
+    }
+
+    function getTodayISO() {
+      const now = new Date();
+      return now.toISOString().split('T')[0];
+    }
+
+    let timerMins = 25, timerSecs = 0, timerInterval = null, timerRunning = false;
+    function toggleTimer() {
+      const icon = document.getElementById("timer-icon");
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        icon.setAttribute("data-lucide", "play");
+      } else {
+        timerRunning = true;
+        icon.setAttribute("data-lucide", "pause");
+        timerInterval = setInterval(() => {
+          if (timerSecs === 0) {
+            if (timerMins === 0) {
+              clearInterval(timerInterval);
+              timerRunning = false;
+              alert("Fokus-Zeit abgelaufen!");
+              resetTimer();
+              return;
+            }
+            timerMins--;
+            timerSecs = 59;
+          } else {
+            timerSecs--;
+          }
+          document.getElementById("timer-display").innerText = `${String(timerMins).padStart(2,'0')}:${String(timerSecs).padStart(2,'0')}`;
+        }, 1000);
+      }
+      lucide.createIcons();
+    }
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      timerMins = 25; timerSecs = 0;
+      document.getElementById("timer-display").innerText = "25:00";
+      document.getElementById("timer-icon").setAttribute("data-lucide", "play");
+      lucide.createIcons();
+    }
+    function promptTimerMinutes() {
+      const mins = prompt("Minuten für Fokus-Timer:", timerMins);
+      if (mins && !isNaN(mins) && mins > 0) {
+        timerMins = parseInt(mins);
+        timerSecs = 0;
+        document.getElementById("timer-display").innerText = `${String(timerMins).padStart(2,'0')}:00`;
+      }
+    }
   </script>
 </body>
 </html>
