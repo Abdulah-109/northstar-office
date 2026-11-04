@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Northstar – Classic Edition mit variabler Stift-Dicke</title>
+  <title>Northstar – Apple Files & Variable Brush Edition</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -86,7 +86,7 @@
         </div>
         <div>
           <h1 class="font-extrabold text-base tracking-wider text-[var(--color-text,#34312D)] leading-none">NORTHSTAR</h1>
-          <p class="text-[10px] text-[var(--color-muted,#81796F)] font-bold tracking-widest uppercase mt-1">Classic Office Suite</p>
+          <p class="text-[10px] text-[var(--color-muted,#81796F)] font-bold tracking-widest uppercase mt-1">Apple Files Edition</p>
         </div>
       </div>
       <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-[var(--color-muted,#81796F)] hover:text-[var(--color-text,#34312D)]">
@@ -198,10 +198,10 @@
         </div>
 
         <div class="p-4 rounded-2xl bg-[var(--color-card,#FFFDF8)] border border-[var(--color-border,#DED5C8)] shadow-xs">
-          <p class="text-xs font-bold text-[var(--color-muted,#81796F)]">Fokus-Modus</p>
+          <p class="text-xs font-bold text-[var(--color-muted,#81796F)]">Fächer</p>
           <div class="flex items-baseline justify-between mt-2">
-            <span class="text-2xl font-extrabold text-[var(--color-text,#34312D)]">Aktiv</span>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--color-sidebar,#EAE2D5)] text-[var(--color-muted,#81796F)]">25 Min</span>
+            <span class="text-2xl font-extrabold text-[var(--color-text,#34312D)]" id="dash-subjects-count">0</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--color-sidebar,#EAE2D5)] text-[var(--color-muted,#81796F)]">Aktiv</span>
           </div>
         </div>
       </div>
@@ -243,7 +243,7 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 class="text-2xl font-bold text-[var(--color-text,#34312D)]">Digitales Notizheft</h2>
-            <p class="text-xs text-[var(--color-muted,#81796F)] mt-1">Verwalte deine Notizbücher mit anpassbarer Stift-Dicke und Undo/Redo.</p>
+            <p class="text-xs text-[var(--color-muted,#81796F)] mt-1">Notizen zeichnen, Stiftdicke einstellen und direkt in Apple-Dateien (iCloud) sichern.</p>
           </div>
           <button onclick="promptCreateNotebook()" class="px-4 py-2.5 rounded-xl bg-[var(--color-accent,#C8B69B)] hover:bg-[var(--color-accent-hover,#B5A182)] text-white font-semibold text-xs shadow-xs transition flex items-center gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i> Neues Notizbuch
@@ -253,9 +253,9 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6" id="notebook-shelf-grid"></div>
       </div>
 
-      <!-- Single Notebook Canvas & Editor Canvas View -->
+      <!-- Single Notebook Canvas & Editor View -->
       <div id="notebook-editor-view" class="space-y-4 hidden">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-[var(--color-card,#FFFDF8)] p-4 rounded-2xl border border-[var(--color-border,#DED5C8)] shadow-xs">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[var(--color-card,#FFFDF8)] p-4 rounded-2xl border border-[var(--color-border,#DED5C8)] shadow-xs">
           <div class="flex items-center gap-3">
             <button onclick="closeNotebookEditor()" class="p-2 rounded-xl bg-[var(--color-sidebar,#EAE2D5)] text-[var(--color-text,#34312D)] hover:bg-[var(--color-border,#DED5C8)] transition">
               <i data-lucide="arrow-left" class="w-5 h-5"></i>
@@ -323,17 +323,19 @@
             </select>
           </div>
 
-          <!-- Actions -->
+          <!-- Actions / Apple Dateien Export -->
           <div class="flex items-center gap-2">
-            <button onclick="clearCanvasPage()" class="px-3 py-1.5 rounded-xl bg-[var(--color-sidebar,#EAE2D5)] text-[var(--color-text,#34312D)] text-xs font-semibold hover:bg-red-100 hover:text-red-700 transition">Seite leeren</button>
-            <button onclick="exportCanvasPNG()" class="px-3 py-1.5 rounded-xl bg-[var(--color-accent,#C8B69B)] text-white text-xs font-semibold hover:bg-[var(--color-accent-hover,#B5A182)] transition">PNG Export</button>
+            <button onclick="clearCanvasPage()" class="px-3 py-1.5 rounded-xl bg-[var(--color-sidebar,#EAE2D5)] text-[var(--color-text,#34312D)] text-xs font-semibold hover:bg-red-100 hover:text-red-700 transition">Leeren</button>
+            <button onclick="saveToAppleFiles()" class="px-3.5 py-1.5 rounded-xl bg-[var(--color-accent,#C8B69B)] text-white text-xs font-bold hover:bg-[var(--color-accent-hover,#B5A182)] transition flex items-center gap-1.5 shadow-xs" title="In Apple-Dateien sichern (Teilen-Dialog / Download)">
+              <i data-lucide="folder-down" class="w-4 h-4"></i> In Apple-Dateien speichern
+            </button>
           </div>
         </div>
 
         <!-- Canvas and Page Container -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div class="lg:col-span-2 space-y-3">
-            <div class="relative bg-white rounded-2xl border border-[var(--color-border,#DED5C8)] shadow-sm overflow-hidden flex justify-center items-center p-2 min-h-[500px]">
+            <div class="relative bg-white rounded-2xl border border-[var(--color-border,#DED5C8)] shadow-sm overflow-hidden flex justify-center items-center p-2 min-h-[550px]">
               <!-- Canvas Background Pattern Layer -->
               <div id="canvas-paper-bg" class="absolute inset-2 paper-pattern-grid rounded-xl pointer-events-none"></div>
 
@@ -354,20 +356,25 @@
                 <button onclick="addNewCanvasPage()" class="px-3 py-1.5 rounded-xl bg-[var(--color-accent,#C8B69B)] text-white text-xs font-bold flex items-center gap-1">
                   <i data-lucide="plus" class="w-4 h-4"></i> Neue Seite
                 </button>
-                <button onclick="nextCanvasPage()" class="px-3 py-1.5 rounded-xl bg-[var(--color-sidebar,#EAE2D5)] text-xs font-bold text-[var(--color-text,#34312D)] flex items-center gap-1">
+                <button onclick="nextCanvasPage()" class="px-3.5 py-1.5 rounded-xl bg-[var(--color-sidebar,#EAE2D5)] text-xs font-bold text-[var(--color-text,#34312D)] flex items-center gap-1">
                   Weiter <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Typed Page Notes -->
+          <!-- Typed Page Notes & Apple Files Text Export -->
           <div class="p-5 rounded-2xl bg-[var(--color-card,#FFFDF8)] border border-[var(--color-border,#DED5C8)] shadow-xs space-y-3 flex flex-col">
-            <h4 class="text-sm font-bold text-[var(--color-text,#34312D)] flex items-center gap-2">
-              <i data-lucide="file-text" class="w-4 h-4 text-[var(--color-accent,#C8B69B)]"></i> Digitaler Seitentext
-            </h4>
-            <p class="text-[11px] text-[var(--color-muted,#81796F)]">Tippe ergänzenden Text für die aktuell ausgewählte Seite ein:</p>
-            <textarea id="notebook-page-text" oninput="saveCurrentPageText()" rows="18" placeholder="Ergänzende getippte Notizen für diese Seite..." class="flex-1 w-full bg-[var(--color-bg,#F5F1E8)] border border-[var(--color-border,#DED5C8)] rounded-xl p-4 text-xs text-[var(--color-text,#34312D)] focus:outline-none focus:border-[var(--color-accent,#C8B69B)] leading-relaxed font-sans"></textarea>
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-bold text-[var(--color-text,#34312D)] flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-[var(--color-accent,#C8B69B)]"></i> Getippter Seitentext
+              </h4>
+              <button onclick="saveTextToAppleFiles()" class="text-[11px] font-bold text-[var(--color-accent,#C8B69B)] hover:underline flex items-center gap-1">
+                <i data-lucide="save" class="w-3 h-3"></i> Als .txt speichern
+              </button>
+            </div>
+            <p class="text-[11px] text-[var(--color-muted,#81796F)]">Tippe Notizen ein. Diese kannst du direkt als Textdatei in Apple-Dateien ablegen:</p>
+            <textarea id="notebook-page-text" oninput="saveCurrentPageText()" rows="17" placeholder="Ergänzende getippte Notizen für diese Seite..." class="flex-1 w-full bg-[var(--color-bg,#F5F1E8)] border border-[var(--color-border,#DED5C8)] rounded-xl p-4 text-xs text-[var(--color-text,#34312D)] focus:outline-none focus:border-[var(--color-accent,#C8B69B)] leading-relaxed font-sans"></textarea>
           </div>
         </div>
       </div>
@@ -711,7 +718,7 @@
     // Digital Notebook State & Brush Size
     let activeNotebookId = null;
     let activePageIdx = 0;
-    let currentTool = 'pen'; // 'pen', 'text', 'highlighter', 'eraser'
+    let currentTool = 'pen';
     let currentPenColor = '#34312D';
     let currentBrushSize = 3;
     let isDrawing = false;
@@ -730,7 +737,7 @@
     });
 
     function loadLocalStorage() {
-      const saved = localStorage.getItem("northstar_office_classic_notebook_brush_data");
+      const saved = localStorage.getItem("northstar_office_apple_files_data");
       if (saved) {
         try {
           appState = JSON.parse(saved);
@@ -743,7 +750,7 @@
     }
 
     function saveLocalStorage() {
-      localStorage.setItem("northstar_office_classic_notebook_brush_data", JSON.stringify(appState));
+      localStorage.setItem("northstar_office_apple_files_data", JSON.stringify(appState));
     }
 
     function applyThemeToDOM() {
@@ -812,7 +819,7 @@
       }
 
       if (tabId === 'notebooks') {
-        setTimeout(resizeCanvas, 100);
+        setTimeout(resizeCanvas, 150);
       }
 
       const sidebar = document.getElementById("sidebar");
@@ -836,6 +843,7 @@
       document.getElementById("dash-open-tasks-count").innerText = openTasks.length;
       document.getElementById("sidebar-open-count").innerText = openTasks.length;
       document.getElementById("dash-notebooks-count").innerText = appState.notebooks.length;
+      document.getElementById("dash-subjects-count").innerText = appState.subjects.length;
       
       const overdueBadge = document.getElementById("dash-overdue-badge");
       if (overdueTasks.length > 0) overdueBadge.classList.remove("hidden");
@@ -858,7 +866,6 @@
       });
 
       const overallPercent = totalSubtopics > 0 ? Math.round((learnedSubtopics / totalSubtopics) * 100) : 0;
-      document.getElementById("dash-subjects-count").innerText = appState.subjects.length;
       document.getElementById("dash-overall-progress-text").innerText = `${overallPercent}%`;
       document.getElementById("dash-learned-subtopics-ratio").innerText = `${learnedSubtopics}/${totalSubtopics}`;
 
@@ -912,7 +919,7 @@
       }
     }
 
-    // ================= DIGITAL NOTEBOOK FUNCTIONS =================
+    // ================= DIGITAL NOTEBOOK & APPLE FILES FUNCTIONS =================
     function renderNotebookShelf() {
       const grid = document.getElementById("notebook-shelf-grid");
       grid.innerHTML = "";
@@ -988,7 +995,7 @@
       setTimeout(() => {
         resizeCanvas();
         loadCanvasPage();
-      }, 50);
+      }, 150);
     }
 
     function closeNotebookEditor() {
@@ -1000,6 +1007,7 @@
 
     function initCanvas() {
       canvas = document.getElementById("notebook-canvas");
+      if (!canvas) return;
       ctx = canvas.getContext("2d");
 
       window.addEventListener("resize", () => {
@@ -1022,20 +1030,35 @@
         const rect = canvas.getBoundingClientRect();
         startDrawing({ clientX: touch.clientX, clientY: touch.clientY, rect });
         e.preventDefault();
-      });
+      }, { passive: false });
       canvas.addEventListener("touchmove", (e) => {
         const touch = e.touches[0];
         draw({ clientX: touch.clientX, clientY: touch.clientY });
         e.preventDefault();
-      });
+      }, { passive: false });
       canvas.addEventListener("touchend", stopDrawing);
     }
 
     function resizeCanvas() {
       if (!canvas) return;
       const container = canvas.parentElement;
-      canvas.width = container.clientWidth - 16;
-      canvas.height = 550;
+      const width = container.clientWidth - 16;
+      const height = Math.max(500, container.clientHeight - 16);
+      
+      // Nur resize wenn Breite > 0, um Darstellungsfehler beim Öffnen zu verhindern
+      if (width > 50) {
+        // Zwischenspeichern des aktuellen Inhalts falls vorhanden
+        const tempImage = canvas.width > 0 ? canvas.toDataURL() : null;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        if (tempImage) {
+          const img = new Image();
+          img.onload = () => ctx.drawImage(img, 0, 0);
+          img.src = tempImage;
+        }
+      }
     }
 
     function setDrawingTool(tool) {
@@ -1156,7 +1179,7 @@
       } else if (currentTool === 'highlighter') {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = currentPenColor + '66';
-        ctx.lineWidth = currentBrushSize * 4; // Marker ist breiter
+        ctx.lineWidth = currentBrushSize * 4;
         ctx.lineCap = 'square';
       } else if (currentTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out';
@@ -1268,12 +1291,54 @@
       }
     }
 
-    function exportCanvasPNG() {
+    // --- Native Apple Dateien Export Funktionen ---
+    function saveToAppleFiles() {
       saveCurrentCanvasPage();
-      const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png");
-      a.download = `notiz_seite_${activePageIdx + 1}.png`;
-      a.click();
+      const nb = appState.notebooks.find(n => n.id === activeNotebookId);
+      const titleClean = nb ? nb.title.replace(/[^a-zA-Z0-9]/g, '_') : 'notizbuch';
+      const filename = `${titleClean}_seite_${activePageIdx + 1}.png`;
+
+      canvas.toBlob(function(blob) {
+        const file = new File([blob], filename, { type: 'image/png' });
+        
+        // Versuche den modernen Web Share API / Dateien Teilen Dialog (perfekt für iOS Safari / Apple Dateien)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({
+            files: [file],
+            title: 'Notizseite sichern',
+            text: 'In Apple-Dateien (iCloud Drive) speichern'
+          }).catch(err => console.log('Share canceled', err));
+        } else {
+          // Fallback für Browser, die direkt den Download anstoßen
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          a.click();
+        }
+      }, 'image/png');
+    }
+
+    function saveTextToAppleFiles() {
+      const textContent = document.getElementById("notebook-page-text").value;
+      const nb = appState.notebooks.find(n => n.id === activeNotebookId);
+      const titleClean = nb ? nb.title.replace(/[^a-zA-Z0-9]/g, '_') : 'notiz';
+      const filename = `${titleClean}_text_seite_${activePageIdx + 1}.txt`;
+
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+      const file = new File([blob], filename, { type: 'text/plain' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: 'Getippte Notizen',
+          text: 'In Apple-Dateien speichern'
+        }).catch(err => console.log('Share canceled', err));
+      } else {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+      }
     }
 
     // ================= SUBJECTS GRID FUNCTIONS =================
@@ -1709,7 +1774,7 @@
 
     function confirmResetAllData() {
       if (confirm("Möchtest du wirklich alle Daten löschen?")) {
-        localStorage.removeItem("northstar_office_classic_notebook_brush_data");
+        localStorage.removeItem("northstar_office_apple_files_data");
         appState = JSON.parse(JSON.stringify(defaultData));
         saveLocalStorage();
         applyThemeToDOM();
