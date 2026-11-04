@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Northstar – Apple Files & Variable Brush Edition</title>
+  <title>Northstar – Donna Paulsen Edition</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -86,7 +86,7 @@
         </div>
         <div>
           <h1 class="font-extrabold text-base tracking-wider text-[var(--color-text,#34312D)] leading-none">NORTHSTAR</h1>
-          <p class="text-[10px] text-[var(--color-muted,#81796F)] font-bold tracking-widest uppercase mt-1">Apple Files Edition</p>
+          <p class="text-[10px] text-[var(--color-muted,#81796F)] font-bold tracking-widest uppercase mt-1">Donna Paulsen Edition</p>
         </div>
       </div>
       <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-[var(--color-muted,#81796F)] hover:text-[var(--color-text,#34312D)]">
@@ -595,6 +595,53 @@
 
   </main>
 
+  <!-- ================= 7. DONNA PAULSEN AI ASSISTANT WIDGET ================= -->
+  <!-- Floating Button -->
+  <button onclick="toggleDonnaChat()" class="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#B8405E] text-white shadow-xl hover:scale-105 active:scale-95 transition flex items-center justify-center border-2 border-white" title="Frag Donna Paulsen">
+    <div class="relative">
+      <i data-lucide="sparkles" class="w-7 h-7"></i>
+      <span class="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border border-white"></span>
+    </div>
+  </button>
+
+  <!-- Donna Chat Modal / Floating Box -->
+  <div id="donna-chat-box" class="fixed bottom-24 right-6 z-50 w-80 md:w-96 bg-[var(--color-card,#FFFDF8)] border border-[var(--color-border,#DED5C8)] rounded-2xl shadow-2xl flex flex-col overflow-hidden hidden transition-all">
+    <!-- Header -->
+    <div class="bg-[#B8405E] text-white p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-black text-sm">DP</div>
+        <div>
+          <h4 class="font-extrabold text-sm leading-none">Donna Paulsen</h4>
+          <p class="text-[10px] opacity-80 mt-0.5">Executive Assistant • I know everything.</p>
+        </div>
+      </div>
+      <button onclick="toggleDonnaChat()" class="text-white/80 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="p-2 bg-[var(--color-sidebar,#EAE2D5)] border-b border-[var(--color-border,#DED5C8)] flex gap-1 overflow-x-auto text-[10px]">
+      <button onclick="askDonnaQuick('status')" class="px-2.5 py-1 rounded-lg bg-[var(--color-card,#FFFDF8)] font-bold text-[var(--color-text,#34312D)] hover:bg-white shrink-0">✨ Lage-Update</button>
+      <button onclick="askDonnaQuick('motive')" class="px-2.5 py-1 rounded-lg bg-[var(--color-card,#FFFDF8)] font-bold text-[var(--color-text,#34312D)] hover:bg-white shrink-0">🔥 Motivation</button>
+      <button onclick="askDonnaQuick('harvey')" class="px-2.5 py-1 rounded-lg bg-[var(--color-card,#FFFDF8)] font-bold text-[var(--color-text,#34312D)] hover:bg-white shrink-0">💼 Harvey-Modus</button>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="donna-messages" class="p-4 flex-1 max-h-80 overflow-y-auto space-y-3 text-xs">
+      <div class="bg-[#B8405E]/10 border border-[#B8405E]/20 text-[var(--color-text,#34312D)] p-3 rounded-2xl rounded-tl-xs">
+        <p class="font-bold text-[#B8405E] text-[10px] mb-1">Donna Paulsen:</p>
+        Ich bin Donna. Ich weiß, was du fragen willst, bevor du es überhaupt tippst. Aber los, schieß ruhig los! 💅
+      </div>
+    </div>
+
+    <!-- Input Box -->
+    <form onsubmit="handleDonnaSubmit(event)" class="p-3 border-t border-[var(--color-border,#DED5C8)] bg-[var(--color-bg,#F5F1E8)] flex items-center gap-2">
+      <input type="text" id="donna-input" placeholder="Frag Donna etwas..." class="flex-1 bg-[var(--color-card,#FFFDF8)] border border-[var(--color-border,#DED5C8)] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#B8405E]">
+      <button type="submit" class="p-2 rounded-xl bg-[#B8405E] hover:bg-[#a0334e] text-white transition">
+        <i data-lucide="send" class="w-4 h-4"></i>
+      </button>
+    </form>
+  </div>
+
   <!-- MODAL: NEUES FACH ANLEGEN -->
   <div id="modal-new-subject" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[var(--color-card,#FFFDF8)] border border-[var(--color-border,#DED5C8)] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
@@ -737,7 +784,7 @@
     });
 
     function loadLocalStorage() {
-      const saved = localStorage.getItem("northstar_office_apple_files_data");
+      const saved = localStorage.getItem("northstar_office_donna_edition_data");
       if (saved) {
         try {
           appState = JSON.parse(saved);
@@ -750,7 +797,7 @@
     }
 
     function saveLocalStorage() {
-      localStorage.setItem("northstar_office_apple_files_data", JSON.stringify(appState));
+      localStorage.setItem("northstar_office_donna_edition_data", JSON.stringify(appState));
     }
 
     function applyThemeToDOM() {
@@ -1045,9 +1092,7 @@
       const width = container.clientWidth - 16;
       const height = Math.max(500, container.clientHeight - 16);
       
-      // Nur resize wenn Breite > 0, um Darstellungsfehler beim Öffnen zu verhindern
       if (width > 50) {
-        // Zwischenspeichern des aktuellen Inhalts falls vorhanden
         const tempImage = canvas.width > 0 ? canvas.toDataURL() : null;
 
         canvas.width = width;
@@ -1301,7 +1346,6 @@
       canvas.toBlob(function(blob) {
         const file = new File([blob], filename, { type: 'image/png' });
         
-        // Versuche den modernen Web Share API / Dateien Teilen Dialog (perfekt für iOS Safari / Apple Dateien)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           navigator.share({
             files: [file],
@@ -1309,7 +1353,6 @@
             text: 'In Apple-Dateien (iCloud Drive) speichern'
           }).catch(err => console.log('Share canceled', err));
         } else {
-          // Fallback für Browser, die direkt den Download anstoßen
           const a = document.createElement("a");
           a.href = URL.createObjectURL(blob);
           a.download = filename;
@@ -1339,6 +1382,92 @@
         a.download = filename;
         a.click();
       }
+    }
+
+    // ================= DONNA PAULSEN AI LOGIC =================
+    function toggleDonnaChat() {
+      const box = document.getElementById("donna-chat-box");
+      box.classList.toggle("hidden");
+    }
+
+    function handleDonnaSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("donna-input");
+      const userText = input.value.trim();
+      if (!userText) return;
+
+      appendDonnaMessage("user", userText);
+      input.value = "";
+
+      setTimeout(() => {
+        const response = generateDonnaResponse(userText);
+        appendDonnaMessage("donna", response);
+      }, 500);
+    }
+
+    function askDonnaQuick(type) {
+      let promptText = "";
+      if (type === 'status') promptText = "Wie sieht meine aktuelle Lage aus?";
+      if (type === 'motive') promptText = "Ich brauche etwas Motivation!";
+      if (type === 'harvey') promptText = "Was würde Harvey Specter jetzt tun?";
+
+      appendDonnaMessage("user", promptText);
+      setTimeout(() => {
+        const response = generateDonnaResponse(promptText);
+        appendDonnaMessage("donna", response);
+      }, 400);
+    }
+
+    function appendDonnaMessage(sender, text) {
+      const container = document.getElementById("donna-messages");
+      const div = document.createElement("div");
+
+      if (sender === "user") {
+        div.className = "bg-[var(--color-sidebar,#EAE2D5)] text-[var(--color-text,#34312D)] p-3 rounded-2xl rounded-tr-xs ml-6";
+        div.innerHTML = `<p class="font-bold text-[10px] text-[var(--color-muted,#81796F)] mb-0.5">Du:</p>${text}`;
+      } else {
+        div.className = "bg-[#B8405E]/10 border border-[#B8405E]/20 text-[var(--color-text,#34312D)] p-3 rounded-2xl rounded-tl-xs mr-6";
+        div.innerHTML = `<p class="font-bold text-[#B8405E] text-[10px] mb-0.5">Donna Paulsen:</p>${text}`;
+      }
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function generateDonnaResponse(input) {
+      const openTasks = appState.tasks.filter(t => !t.completed).length;
+      const lower = input.toLowerCase();
+
+      if (lower.includes("lage") || lower.includes("status") || lower.includes("überblick")) {
+        if (openTasks === 0) {
+          return "Du hast aktuell 0 offene Aufgaben. Ich habe alles im Griff – wie immer. Zeit für einen Kaffee! ☕";
+        }
+        return `Ich habe mir deine Liste angesehen: Du hast aktuell **${openTasks} offene Aufgaben**. Schieb es nicht vor dir her – erledige die wichtigste Aufgabe jetzt, damit wir den Tag wie Gewinner beenden. 💅`;
+      }
+
+      if (lower.includes("motivation") || lower.includes("müde") || lower.includes("keine lust")) {
+        const quotes = [
+          "Sorry, ich kann dich nicht hören über das Geräusch deiner eigenen Ausreden hinweg. Steh auf und zieh das durch! 🔥",
+          "Ich bin nicht deshalb so gut in meinem Job, weil ich mich auf meinen Lorbeeren ausruhe. Lass uns keine Zeit verschwenden!",
+          "Du willst großartig sein? Dann handle auch so. Weiter geht's! ✨"
+        ];
+        return quotes[Math.floor(Math.random() * quotes.length)];
+      }
+
+      if (lower.includes("harvey") || lower.includes("specter")) {
+        return "Harvey würde sagen: *'Ich spiele nicht die Quoten, ich spiele den Gegner.'* Also hör auf zu zweifeln und setz dich an deine Notizen! 💼";
+      }
+
+      if (lower.includes("wer bist du") || lower.includes("donna")) {
+        return "Ich bin Donna. Ich bin allwissend, perfekt organisiert und der Grund, warum hier überhaupt alles läuft. 😉";
+      }
+
+      const defaultResponses = [
+        "Weil ich Donna bin! Aber im Ernst: Geh in dein Notizheft oder arbeite deine Aufgaben ab. Du schaffst das!",
+        "Das ist süß, dass du fragst. Aber du solltest dich lieber auf deine offenen Aufgaben konzentrieren. Ich behalte dich im Auge!",
+        "Ich weiß bereits, wie dieser Tag ausgeht: Du wirst deine Aufgaben erledigen und großartig sein."
+      ];
+      return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
     }
 
     // ================= SUBJECTS GRID FUNCTIONS =================
@@ -1774,7 +1903,7 @@
 
     function confirmResetAllData() {
       if (confirm("Möchtest du wirklich alle Daten löschen?")) {
-        localStorage.removeItem("northstar_office_apple_files_data");
+        localStorage.removeItem("northstar_office_donna_edition_data");
         appState = JSON.parse(JSON.stringify(defaultData));
         saveLocalStorage();
         applyThemeToDOM();
