@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Northstar – Classic Edition mit Notizheft & Undo/Redo</title>
+  <title>Northstar – Classic Edition mit variabler Stift-Dicke</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -243,7 +243,7 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 class="text-2xl font-bold text-[var(--color-text,#34312D)]">Digitales Notizheft</h2>
-            <p class="text-xs text-[var(--color-muted,#81796F)] mt-1">Verwalte deine Notizbücher mit handschriftlichen Skizzen und Undo/Redo-Verlauf.</p>
+            <p class="text-xs text-[var(--color-muted,#81796F)] mt-1">Verwalte deine Notizbücher mit anpassbarer Stift-Dicke und Undo/Redo.</p>
           </div>
           <button onclick="promptCreateNotebook()" class="px-4 py-2.5 rounded-xl bg-[var(--color-accent,#C8B69B)] hover:bg-[var(--color-accent-hover,#B5A182)] text-white font-semibold text-xs shadow-xs transition flex items-center gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i> Neues Notizbuch
@@ -280,6 +280,16 @@
             <button id="tool-eraser" onclick="setDrawingTool('eraser')" class="p-2 rounded-lg text-[var(--color-muted,#81796F)] hover:text-[var(--color-text,#34312D)] transition" title="Radierer">
               <i data-lucide="eraser" class="w-4 h-4"></i>
             </button>
+
+            <div class="h-5 w-px bg-[var(--color-border,#DED5C8)] mx-1"></div>
+
+            <!-- Strichstärke / Dicke Regler -->
+            <div class="flex items-center gap-1.5 px-1">
+              <i data-lucide="minus" class="w-3.5 h-3.5 text-[var(--color-muted,#81796F)]"></i>
+              <input type="range" id="brush-size-slider" min="1" max="25" value="3" oninput="updateBrushSize(this.value)" class="w-20 accent-[var(--color-accent,#C8B69B)] cursor-pointer" title="Dicke anpassen">
+              <i data-lucide="plus" class="w-3.5 h-3.5 text-[var(--color-muted,#81796F)]"></i>
+              <span id="brush-size-label" class="text-[10px] font-bold font-mono w-5 text-center text-[var(--color-text,#34312D)]">3</span>
+            </div>
 
             <div class="h-5 w-px bg-[var(--color-border,#DED5C8)] mx-1"></div>
 
@@ -698,16 +708,16 @@
     let activeTopicContext = { subjectId: null, topicId: null };
     let currentTaskFilter = 'all';
 
-    // Digital Notebook State & Undo/Redo Stacks
+    // Digital Notebook State & Brush Size
     let activeNotebookId = null;
     let activePageIdx = 0;
     let currentTool = 'pen'; // 'pen', 'text', 'highlighter', 'eraser'
     let currentPenColor = '#34312D';
+    let currentBrushSize = 3;
     let isDrawing = false;
     let lastX = 0, lastY = 0;
     let canvas, ctx;
 
-    // Undo / Redo history stacks per session
     let undoStack = [];
     let redoStack = [];
 
@@ -720,7 +730,7 @@
     });
 
     function loadLocalStorage() {
-      const saved = localStorage.getItem("northstar_office_classic_notebook_undo_data");
+      const saved = localStorage.getItem("northstar_office_classic_notebook_brush_data");
       if (saved) {
         try {
           appState = JSON.parse(saved);
@@ -733,7 +743,7 @@
     }
 
     function saveLocalStorage() {
-      localStorage.setItem("northstar_office_classic_notebook_undo_data", JSON.stringify(appState));
+      localStorage.setItem("northstar_office_classic_notebook_brush_data", JSON.stringify(appState));
     }
 
     function applyThemeToDOM() {
@@ -902,7 +912,7 @@
       }
     }
 
-    // ================= DIGITAL NOTEBOOK FUNCTIONS & UNDO/REDO =================
+    // ================= DIGITAL NOTEBOOK FUNCTIONS =================
     function renderNotebookShelf() {
       const grid = document.getElementById("notebook-shelf-grid");
       grid.innerHTML = "";
@@ -1046,6 +1056,11 @@
       if (currentTool === 'eraser') setDrawingTool('pen');
     }
 
+    function updateBrushSize(val) {
+      currentBrushSize = parseInt(val);
+      document.getElementById("brush-size-label").innerText = val;
+    }
+
     function changePaperPattern(pattern, save = true) {
       const paperBg = document.getElementById("canvas-paper-bg");
       paperBg.className = "absolute inset-2 rounded-xl pointer-events-none ";
@@ -1071,8 +1086,8 @@
       if (!canvas) return;
       const dataUrl = canvas.toDataURL();
       undoStack.push(dataUrl);
-      if (undoStack.length > 30) undoStack.shift(); // limit history size
-      redoStack = []; // clear redo on new action
+      if (undoStack.length > 30) undoStack.shift();
+      redoStack = [];
     }
 
     function undoCanvas() {
@@ -1115,7 +1130,7 @@
       if (currentTool === 'text') {
         const textToType = prompt("Text zum Einfügen eingeben:");
         if (textToType && textToType.trim()) {
-          ctx.font = "16px Inter, sans-serif";
+          ctx.font = `${Math.max(12, currentBrushSize * 4)}px Inter, sans-serif`;
           ctx.fillStyle = currentPenColor;
           ctx.fillText(textToType, coords.x, coords.y);
           saveCurrentCanvasPage();
@@ -1135,17 +1150,17 @@
       if (currentTool === 'pen') {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = currentPenColor;
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = currentBrushSize;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
       } else if (currentTool === 'highlighter') {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = currentPenColor + '66';
-        ctx.lineWidth = 14;
+        ctx.lineWidth = currentBrushSize * 4; // Marker ist breiter
         ctx.lineCap = 'square';
       } else if (currentTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = 18;
+        ctx.lineWidth = currentBrushSize * 3;
         ctx.lineCap = 'round';
       }
 
@@ -1694,7 +1709,7 @@
 
     function confirmResetAllData() {
       if (confirm("Möchtest du wirklich alle Daten löschen?")) {
-        localStorage.removeItem("northstar_office_classic_notebook_undo_data");
+        localStorage.removeItem("northstar_office_classic_notebook_brush_data");
         appState = JSON.parse(JSON.stringify(defaultData));
         saveLocalStorage();
         applyThemeToDOM();
